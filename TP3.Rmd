@@ -441,24 +441,101 @@ hosts_mayoritarios <- hosts_mayoritarios %>%
 ```
 
 ```{r}
-hosts_mayoritarios <-st_join (hosts_mayoritarios, barrios)
+hosts_mayoritarios <-st_join (hosts_mayoritarios, barrios) 
 ```
 
 ```{r}
-ggplot(hosts_mayoritarios)
+class(hosts_mayoritarios$BARRIO)
+```
+
+```{r}
+hosts_mayoritarios <- hosts_mayoritarios %>% 
+  filter(!(is.na(BARRIO)))
 ```
 
 
-
-
-ggplot(incidentes_ordenados_01) + 
-    geom_bar(aes(x = mes, fill=Incident.Category), position = "dodge") +
-    labs(title = "Cantidad de Delitos por Mes en San Francisco por tipo",
+```{r fig.height=7, fig.width=15}
+ggplot(hosts_mayoritarios)+
+  geom_bar(aes(x = BARRIO, fill=host_id),position = "dodge") +
+  labs(title = "Cantidad de unidades de Airbnb por barrio, ofertada por los anfitriones mayoritarios",
          subtitle = "Año 2019",
-         x = "Mes",
+         x = "Barrio",
          y = "Cantidad",
-         fill = "Tipo de incidente",
-         caption = "Fuente: SF Data")
+         fill = "Anfitrión")+
+  scale_fill_manual(values= c("hotpink4", "darkolivegreen4", "coral2","aquamarine3"))+
+  theme(axis.text.x = element_text(angle = 45),
+        title=element_text(size=20))
+```
+A partir de este gráfico se evidencia mucho mejor lo previamente explicado e incluso, permite obtener conclusiones más claras.
+Se evidencia que en Palermo, Recoleta y Retiro los cuatro anfitriones poseen unidades (tal como se conjeturó anteriormente). Sin embargo, en Microcentro (Balvanera, San Nicolás, etc) no tienen unidades los cuatro anfitriones (a diferencia de lo previamente dicho).
+Se puede confirmar que en Barracas, Flores y Villa Urquiza solo el anfitrión 4 posee unidades (tal como se planteó anteriormente). Además, este gráfico nos permite ver que también posee en Constitución, siendo el único de los cuatro anfitriones. 
+Por último, también se puede observar que el anfitrión 1 tiene más de 50 unidades en Palermo, lo cual supera por más del doble al resto de la oferta de cada uno de los anfitriones restantes. 
+
+2. En segundo lugar, también podría ser interesante analizar cómo se distribuye la oferta del tipo de propiedades según los barrios, es decir, si las pocas casas (aproximadamente 7% de la oferta) se concentran en algún barrio. 
+
+```{r}
+barrios_reducida <- barrios %>% 
+  select(1,2,7)
+```
+
+```{r}
+data3 <- data3 %>% 
+  filter(!is.na(latitude), !is.na(longitude)) %>% 
+  st_as_sf(coords = c("longitude", "latitude"), crs = 4326)
+```
+
+```{r}
+data3 <-st_join (data3, barrios_reducida) 
+```
+
+```{r}
+data3 <- data3 %>% 
+  filter(property_type %in% c("Apartment", "House")) %>% 
+  filter(!(is.na(BARRIO)))
+```
+
+
+```{r fig.height=7, fig.width=15}
+ggplot(data3)+
+  geom_bar(aes(x = BARRIO, fill=property_type),position = "dodge") +
+  labs(title = "Tipo de propiedad de Airbnb por barrio",
+         subtitle = "Año 2019",
+         x = "Barrio",
+         y = "Cantidad",
+         fill = "Tipo de propiedad")+
+  scale_fill_manual(values= c("hotpink4", "darkolivegreen4"))+
+  theme(axis.text.x = element_text(angle = 90),
+        title=element_text(size=20))
+```
+
+En el último gráfico se puede observar que la mayoría de las casas y los departamentos se encuentran en Palermo y que no hay nigún barrio en el que las casas superen a la cantidad de departamentos ofertados. 
+
+3. Ahora se analizará el valor del m2.
+Para ello, primero se hará un boxplot, para entender la dispersión en los datos. Lo aplicaremos a departamentos y casas (los tipos de propiedad mayoritarios), para poder observar si el tipo de propiedad influye en la dispersión de datos. 
+
+```{r}
+valor_m2 <- valor_m2 %>% 
+  filter(property_type %in% c("Apartment", "House"))
+```
+
+```{r}
+ggplot(valor_m2) + 
+  geom_boxplot(aes(x=property_type, y=valor_m2_pesos, color=property_type))+
+  labs(title = "Dispersión del valor del m2 en pesos por tipo de propiedad en alquiler",
+         subtitle = "Año 2019",
+         x = "Tipo de propiedad",
+         y = "Valor m2 en pesos",)+
+  scale_color_manual(values= c("coral4", "coral2"))+
+  theme(title=element_text(size=8),
+        axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        legend.position = "none")
+```
+A partir del gráfico anterior se puede observar que, si bien las medianas en ambos casos están en valores similares, para los departamentos hay mucha mayor dispersión en el valor del m2 ya que se observan muchos outlayers. 
+
+De todos modos, y entendiendo las limitaciones de estos valores, se realizará el siguiente mapa con el fin de analizar el valor promerio del m2 y si hay alguna relación geográfica entre ellos.
+
+
 
 
 
