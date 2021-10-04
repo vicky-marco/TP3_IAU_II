@@ -510,6 +510,25 @@ ggplot(data3)+
 
 En el último gráfico se puede observar que la mayoría de las casas y los departamentos se encuentran en Palermo y que no hay nigún barrio en el que las casas superen a la cantidad de departamentos ofertados. 
 
+De todos modos, haremos un facetado para poder ver algunos barrios que registran unidades de departamentos y casa más en detalle:
+
+```{r fig.height=7, fig.width=15}
+ggplot(data3 %>% 
+         filter(BARRIO %in% c("ALMAGRO","CHACARITA","PALERMO", "SAN TELMO", "VILLA CRESPO")))+
+  geom_bar(aes(x =property_type, fill=property_type),position = "dodge") +
+  facet_wrap(BARRIO~.)+
+    labs(title = "Tipo de propiedad de Airbnb por barrio",
+         subtitle = "Año 2019",
+         x = "Barrio",
+         y = "Cantidad",
+         fill = "Tipo de propiedad")+
+  scale_fill_manual(values = c("hotpink4", "darkolivegreen4"))+
+  theme(axis.text.x = element_text(angle = 90),
+        title=element_text(size=20))
+```
+A partir del facetado se pueden observar mejor estos barrios, que eran los que más casas tenían. De todas formas, se puede corroborar que en todos los barrios es mayor la cantidad de departamentos que de casas ofertadas a través de Airbnb. 
+
+
 3. Ahora se analizará el valor del m2.
 Para ello, primero se hará un boxplot, para entender la dispersión en los datos. Lo aplicaremos a departamentos y casas (los tipos de propiedad mayoritarios), para poder observar si el tipo de propiedad influye en la dispersión de datos. 
 
@@ -534,6 +553,77 @@ ggplot(valor_m2) +
 A partir del gráfico anterior se puede observar que, si bien las medianas en ambos casos están en valores similares, para los departamentos hay mucha mayor dispersión en el valor del m2 ya que se observan muchos outlayers. 
 
 De todos modos, y entendiendo las limitaciones de estos valores, se realizará el siguiente mapa con el fin de analizar el valor promerio del m2 y si hay alguna relación geográfica entre ellos.
+
+```{r}
+str(valor_m2_barrio_resumen)
+```
+```{r}
+valor_m2_barrio_corople <- st_join(barrios_reducida, valor_m2_barrio_resumen)
+```
+
+
+```{r fig.height=8, fig.width=15}
+ggplot()+  
+  geom_sf(data = barrios, fill=NA) +
+  geom_sf(data = valor_m2_barrio_corople, aes(fill=valor_m2_prom))+
+  geom_sf_label(data = barrios, aes(label=BARRIO), size=2.7, fill=NA)+
+  scale_fill_viridis_c()+
+   labs(title = "Valor promedio del m2 por barrio", 
+       fill = "Valor promedio del m2", 
+     x="Longitud",y="Latitud")+
+  theme_void()+
+  theme(title=element_text(size=20),legend.text=element_text(size=10), legend.title = element_text(size=12))
+```
+En este mapa se puede observar que en los barrios del sur y del este no hay unidades de Airbnb para alquilar.
+En cuanto al valor del m2 se evidencia valores elevados en las unidades del Micrcocentro (San Nicolás, Balvanera, San Cristobal) y en Boedo y Villa Crespo. 
+En el caso del corredor norte (Recoleta, Palermo y Belgrano), los valores del m2 parecerían pertenecer a la mitad de la escala. Sin embargo, es necesario recordar el gráfico de barras previamente analizado en el final del TP 1, en el que se detalla el valor promedio del m2 en pesos y la cantidad de unidades ofertadas. 
+
+
+Ahora bien, más allá del valor del m2, resulta interesante profundizar el análisis sobre la localización de las unidades de Airbnb y la cantidad de ellas. Por lo tanto: 
+
+```{r}
+ggplot()+  
+  geom_sf(data = barrios, fill=NA, color="gray70") +
+  geom_point(data=data2, aes(x = longitude, y = latitude), size=1, alpha=0.5, color="coral2", inherit.aes = FALSE)+
+  labs(title="Localización de unidades de Airbnb en CABA (2019)")+
+  theme_void()
+```
+Este mapa permite ver la gran cantidad de unidades de Airbnb en el Microcentro y Corredor Norte de la Ciudad, pero no permite ver en detalle la densidad (ya que puede haber puntos superpuestos)
+
+Para analizar la densidad,se hará el siguiente mapa:
+
+```{r}
+ggplot()+  
+  geom_sf(data = barrios, fill=NA, color="gray70") +
+  geom_bin2d(data = data2, aes(x = longitude, y = latitude), bins=50)+
+  scale_fill_viridis_c()+
+  labs(title = "Densidad de unidades de Airbnb")+
+    theme_void()
+```
+A partir de este mapa se evidencia mejor la densidad de las unidades, permitiendo ver que la mayor parte de las unidades de Airbnb se localizan en la zona del Microcentro, Retiro, Recoleta y Palermo.
+
+
+#Conclusiones
+A través de este trabajo práctico se logró visualizar diferentes características del fenómeno Airbnb en la Ciudad de Buenos Aires, pudiendo concluir que:
+
+- Los anfitriones que ofrecen la mayor cantidad de unidades de Airbnb, coinciden en ofrecerlas en los barrios de Palermo, Recoleta y Retiro. Sin embargo, hay un anfitrión, de los principales oferentes, que las ofrece en barrios que los demás no, como por ejemplo: Barracas, Flores y Villa Urquiza. 
+
+- Los departamentos son el tipo de propiedad que más se ofrece y esta tendencia se confirma en todos los barrios. 
+
+- El valor promedio del m2 presenta dispersiones, y éstas son mayores en los valores de los departamentos que en los de las casas para alquilar. 
+
+- La mayor densidad de unidades ofrecidas para alquilar se encuentran en el corredor Norte (Retiro, Recoleta y Palermo) y en el Microcentro. Los barrios del sur y del este de la Ciudad presentan pocos o ninguna unidad disponible para el alquiler mediante Airbnb. 
+
+ 
+
+
+
+
+
+
+
+
+
 
 
 
